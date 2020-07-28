@@ -2,12 +2,58 @@
 from bs4 import BeautifulSoup
 from urllib import request
 import requests
+import urllib.request as ur
+import os
+import random
+import time
+# pc端的user-agent
+user_agent_pc = [
+    # 谷歌
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.html.2171.71 Safari/537.36',
+    'Mozilla/5.0.html (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.html.1271.64 Safari/537.11',
+    'Mozilla/5.0.html (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Chrome/10.0.html.648.133 Safari/534.16',
+    # 火狐
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64; rv:34.0.html) Gecko/20100101 Firefox/34.0.html',
+    'Mozilla/5.0.html (X11; U; Linux x86_64; zh-CN; rv:1.9.2.10) Gecko/20100922 Ubuntu/10.10 (maverick) Firefox/3.6.10',
+    # opera
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.html.2171.95 Safari/537.36 OPR/26.0.html.1656.60',
+    # qq浏览器
+    'Mozilla/5.0.html (compatible; MSIE 9.0.html; Windows NT 6.1; WOW64; Trident/5.0.html; SLCC2; .NET CLR 2.0.html.50727; .NET CLR 3.5.30729; .NET CLR 3.0.html.30729; Media Center PC 6.0.html; .NET4.0C; .NET4.0E; QQBrowser/7.0.html.3698.400)',
+    # 搜狗浏览器
+    'Mozilla/5.0.html (Windows NT 5.1) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.html.963.84 Safari/535.11 SE 2.X MetaSr 1.0.html',
+    # 360浏览器
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.html.1599.101 Safari/537.36',
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64; Trident/7.0.html; rv:11.0.html) like Gecko',
+    # uc浏览器
+    'Mozilla/5.0.html (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.html.2125.122 UBrowser/4.0.html.3214.0.html Safari/537.36',
+]
+# 移动端的user-agent
+user_agent_phone = [
+    # IPhone
+    'Mozilla/5.0.html (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.html.2 Mobile/8J2 Safari/6533.18.5',
+    # IPAD
+    'Mozilla/5.0.html (iPad; U; CPU OS 4_2_1 like Mac OS X; zh-cn) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.html.2 Mobile/8C148 Safari/6533.18.5',
+    'Mozilla/5.0.html (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.html.2 Mobile/8J2 Safari/6533.18.5',
+    # Android
+    'Mozilla/5.0.html (Linux; U; Android 2.2.1; zh-cn; HTC_Wildfire_A3333 Build/FRG83D) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0.html Mobile Safari/533.1',
+    'Mozilla/5.0.html (Linux; U; Android 2.3.7; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0.html Mobile Safari/533.1',
+    # QQ浏览器 Android版本
+    'MQQBrowser/26 Mozilla/5.0.html (Linux; U; Android 2.3.7; zh-cn; MB200 Build/GRJ22; CyanogenMod-7) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0.html Mobile Safari/533.1',
+    # Android Opera Mobile
+    'Opera/9.80 (Android 2.3.4; Linux; Opera Mobi/build-1107180945; U; en-GB) Presto/2.8.149 Version/11.10',
+    # Android Pad Moto Xoom
+    'Mozilla/5.0.html (Linux; U; Android 3.0.html; en-us; Xoom Build/HRI39) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0.html Safari/534.13',
+]
 
+def get_user_agent_pc():
+    return random.choice(user_agent_pc)
 
+def get_user_agent_phone():
+    return random.choice(user_agent_phone)
 
 def mkdir(path):
     # 引入模块
-    import os
+
 
     # 去除首位空格
     path = path.strip()
@@ -28,40 +74,59 @@ def mkdir(path):
         # 如果目录存在则不创建，并提示目录已存在
         return False
 
-def get_all_downLink(url):
-    r = requests.get(url)
+def get_all_downLink(url,headers):
+    r =openlink(url,headers)
     html = r.text
     soup=BeautifulSoup(html, 'html.parser')
-    return soup.find_all('a', target="_blank")
+    data=soup.find_all('a', target="_blank")
+    # for i in data:
+    #     print(i.text.strip() + '\t' + i['href'], file=open('downlinks.txt', 'r+', encoding='utf-8'))
+    return data
+    # for i in soup.find_all('a', target="_blank"):
+        #print(i.text.strip() + '\t' + i['href'], file=open('bomblab.txt', 'a+', encoding='utf-8'))
+        #break
+        #print(i['href'])
+        #print(i.text.strip().strip('\n'))
+    #print(soup)  # 输出响应的html对象
+    #print(soup.prettify())  # 使用prettify()格式化显示输出
 
 
 
-def download(url):
+
+def download(url,headers):
     #print('Downloading:',url)
-    html = request.urlopen(url).read()
+    r =openlink(url,headers)
+    html =r.text
     return html
 
-def crawl_mp3(name, last):
+def crawl_mp3(name, last,PartNum,headers):
 
     url = "https://res.wx.qq.com/voice/getvoice?mediaid="
-    path = "/python_project/间客/"+str(name[0:3])
+    path = "/python_project/间客/第"+str(PartNum)+"卷"
     mkdir(path)
     url = url + last
     path = path + "/" + name + ".mp3"
-    r = requests.get(url)
     print(path)
+    if (os.path.exists(path)):
+        print('exit!')
+        return
+    r = openlink(url,headers)
+    print(path+'\t'+url, file=open('/python_project/download url.txt', 'a+', encoding='utf-8'))
     with open(path, "wb") as f:
         f.write(r.content)
     f.close()
     print('ok')
 
 
-def start_download_url(link_lists):
+
+def start_download_url(link_lists,PartNum,headers):
+
     for index, item in enumerate(link_lists):
         link = item['href']
+        #name=item.text.strip()
         #link = item.split('\t')[1]
         # link = "http://mp.weixin.qq.com/s?__biz=MzIyMjg4NDA1OA==&mid=2247485837&idx=1&sn=d74d7ba47f6ef477d2f11efbbcbc8895&chksm=e827f038df50792efcce67d3ef933cbc483874b36e71f0d843f2274c0fab3799d7c9272ad8bd&scene=21#wechat_redirect"
-        html = download(link)
+        html = download(link,headers)
         soup = BeautifulSoup(html, 'lxml')
         # last = soup.find(id='voice_encode_fileid')
         a = soup.find('mpvoice')
@@ -72,17 +137,56 @@ def start_download_url(link_lists):
         name = ''.join(name.split('间客'))
         name = ''.join(name.split())
         #print(name)
-        crawl_mp3(name, last)
+        crawl_mp3(name,last,PartNum,headers)
+
+
+def start_download(PartNum):
+    with open('downlinks.txt', 'r', encoding='utf-8') as file:
+        link_lists = file.readlines()
+        for index, item in enumerate(link_lists):
+            link = item.split('\t')[1]
+            # html = download(link)
+            # soup = BeautifulSoup(html, 'lxml')
+            # last = soup.find(id='voice_encode_fileid')
+            # a= soup.find('mpvoice')
+            # name = a['name']
+            # last = a['voice_encode_fileid']
+            # print(last)
+            name=item.split('\t')[0].split('|')[1]
+            print("第"+str(PartNum)+"卷-"+str(index+1)+name)
+
+def openlink(link,headers):
+        maxTryNum = 10
+        for tries in range(maxTryNum):
+            try:
+                re=requests.get(url=link, headers=headers)
+                time.sleep(1)
+                return re
+            except:
+                if tries < (maxTryNum - 1):
+                    continue
+                else:
+                    print("Has tried %d times to access url %s, all failed!", maxTryNum, link)
+                    break
+
 
 if __name__ == '__main__':
     url1="https://mp.weixin.qq.com/s/ZSymfyV9WuHgx492sotB-w"
     url2="https://mp.weixin.qq.com/s/_1rRtmoB-n0H-LoOg0yw4Q"
     url3="https://mp.weixin.qq.com/s/Dw-S9pRgPbcKsVyiLxzigA"
     url4="https://mp.weixin.qq.com/s/8ll0a0tphPbn67idAqMJ9A"
-    url=[url1,url2,url3,url4]
-    for item in url:
-        downLink=get_all_downLink(item)
-        start_download_url(downLink)
+    #url=[url1,url2,url3,url4]
+    url = [url1, url2, url3, url4]
+    headers = {
+        "User-Agent":  'Mozilla/5.0.html (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.html.2171.71 Safari/537.36'
+    }
+    for index, item in enumerate(url):
+        if(item==""):
+            continue
+        downLink=get_all_downLink(item,headers)
+        #start_download(index+1)
+        start_download_url(downLink,index+1,headers)
     #get_all_link("https://mp.weixin.qq.com/s/8ll0a0tphPbn67idAqMJ9A")
     #get_all_downLink(url4)
+    print("ok")
 
